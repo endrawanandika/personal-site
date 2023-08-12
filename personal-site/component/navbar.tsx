@@ -11,6 +11,7 @@ import {
 } from '@chakra-ui/react'
 import { MoonIcon, SunIcon } from '@chakra-ui/icons'
 import Link from 'next/link'
+import { useCloserStore } from '@/store/closer';
 
 interface Props {
   children: React.ReactNode
@@ -20,8 +21,16 @@ interface Props {
 const NavLink = (props: Props) => {
   const { children } = props
 
+  const closer = useCloserStore((state) => state.closer)
+  const setNewCloser = useCloserStore((state) => state.setCloser)
+
+  const navigate = () => {
+    closer();
+    setNewCloser(() => {})
+  }
+
   return (
-    <Link href={props.link}>
+    <Link href={props.link} onClick={navigate}>
       <Box
         px={2}
         py={1}
