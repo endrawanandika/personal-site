@@ -11,6 +11,7 @@ import {
   useColorModeValue,
   Container,
   VStack,
+  Image,
 } from '@chakra-ui/react';
 import Link from 'next/link'
 
@@ -58,8 +59,16 @@ const Tags: React.FC<ITags> = (props) => {
 };
 
 export interface ContentBlock {
+  type: string;
   id: string;
+  content: Array<SubContentBlock>;
+}
+
+export interface SubContentBlock {
+  type: string;
+  id: number;
   content: string;
+  link: string;
 }
 
 export interface ArticleDetailData {
@@ -77,9 +86,40 @@ export const ArticleDetail: React.FC<ArticleDetailData> = (props) => {
         <Heading as="h2">{props.title}</Heading>
         <Text>{props.createdAt?.toLocaleDateString()}</Text>
         {props.content.map((content) => {
+          if (content.type === "image") {
+            return (
+              <Image src={content.content[0].content} key={content.id}></Image>
+            )
+          }
+          if (content.type === "heading_1") {
+            return (
+              <Heading as="h1" key={content.id}>
+                <br></br>
+                {content.content[0].content}
+              </Heading>
+            )
+          }
           return (
             <Text as="p" fontSize="lg" key={content.id}>
-              {content.content}
+              {content.content.map((subcontent) => {
+                if (subcontent.type === "link") {
+                  return (
+                    <ChakraLink href={subcontent.link} color='teal.500' isExternal key={subcontent.id}>
+                      {subcontent.content}
+                    </ChakraLink>
+                  )
+                }
+                if (subcontent.type === "internal_link") {
+                  return (
+                    <ChakraLink as={Link} href={subcontent.link} color='teal.500' key={subcontent.id}>
+                      {subcontent.content}
+                    </ChakraLink>
+                  )
+                }
+                return (
+                  <Text as="span" key={subcontent.id}>{subcontent.content}</Text>
+                )
+              })}
             </Text>
           )
         })}

@@ -3,6 +3,8 @@ import { ArticleDetail, ArticleDetailData, ContentBlock } from "@/component/blog
 import { notion, databaseId } from "@/external/notion";
 const { iteratePaginatedAPI } = require('@notionhq/client');
 
+const prefix = "http://localhost:3000";
+
 async function getArticle(slug: string) {  
   try {
     const response = await notion.databases.query({
@@ -24,9 +26,43 @@ async function getArticle(slug: string) {
     for await (const block of iteratePaginatedAPI(notion.blocks.children.list, {
       block_id: pageID,
     })) {
-      if (block[block.type].rich_text) {
-        const line = block[block.type].rich_text.map((t: any) => t.plain_text).join("")
+      if (block.type === "image") {
         content.push({
+          type: "image",
+          id: block.id,
+          content: [{
+            id: 0,
+            type: "",
+            link: "",
+            content: block.image.file.url,
+          }],
+        })
+      } else if (block[block.type].rich_text) {
+        let idx = 0; // sub content doesn't have id from notion, and because this is server component, it should be okay (once per request, doesnt rerender).
+        const line = block[block.type].rich_text.map((t: any) => {
+          idx += 1;
+
+          let type = ""
+          let link = ""
+
+          if (t.href) {
+            type = "link"
+            link = t.href
+            if (t.href.startsWith(prefix)) {
+              type = "internal_link"
+              link = t.href.slice(prefix.length)
+            }
+          }
+
+          return {
+            id: idx,
+            type: type,
+            link: link,
+            content: t.plain_text,
+          }
+        })
+        content.push({
+          type: block.type,
           id: block.id,
           content: line,
         })
