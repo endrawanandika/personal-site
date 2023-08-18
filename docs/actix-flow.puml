@@ -1,0 +1,152 @@
+@startuml actix-flow
+entity "Coordinator" as main
+entity "Session 1" as a
+participant "Browser 1" as aa
+entity "Session 2" as b
+participant "Browser 2" as bb
+entity "Session 3" as c
+participant "Browser 3" as cc
+== Browser 1 join ==
+aa -> a: joinRoom A
+a -> a: create id 1
+a -> main: joinRoom A
+main -> main: save 1 in A
+
+== Browser 2 join ==
+bb -> b: joinRoom A
+b -> b: create id 2
+b -> main: joinRoom A
+main -> main: save 2 in A
+main -> a: init createOffer for id 2
+a -> aa: init createOffer for id 2
+
+aa -> aa: init PeerConnection for id 2
+aa -> aa: createOffer for id 2
+aa -> aa: save localDescription for later id 2
+
+aa -> a: gives offer for id 2
+a -> main: gives offer for id 2
+main -> b: init createAnswer for id 1
+b -> bb: init createAnswer for id 1
+
+bb -> bb: init PeerConnection for id 1
+bb -> bb: setRemoteDescription from offer id 1
+bb -> bb: createAnswer from offer id 1
+bb -> bb: save localDescription for later id 1
+
+bb -> b: gives answer for id 1
+b -> main: gives answer for id 1
+main -> a: init acceptAnswer for id 2
+a -> aa: init acceptAnswer for id 2
+
+aa -> aa: setLocalDescription from delay id 2
+aa -> aa: setRemoteDescription from answer id 2
+
+group concurrent ICE flow
+  aa -> aa: onicecandidate
+  aa -> a: gives iceCandidate for id 2
+  a -> main: gives iceCandidate for id 2
+  main -> b: init addIceCandidate for id 1
+  b -> bb: init addIceCandidate for id 1
+  bb -> bb: addIceCandidate for id 1
+end
+
+aa -> a: ackAcceptAnswer for id 2
+a -> main: ackAcceptAnswer for id 2
+main -> b: init ackAcceptAnswer for id 1
+b -> bb: init ackAcceptAnswer for id 1
+bb -> bb: setLocalDescription from delay id 1
+
+group concurrent ICE flow
+  bb -> bb: onicecandidate
+  bb -> b: gives iceCandidate for id 1
+  b -> main: gives iceCandidate for id 1
+  main -> a: init addIceCandidate for id 2
+  a -> aa: init addIceCandidate for id 2
+  aa -> aa: addIceCandidate for id 2
+end
+
+newpage
+
+== Browser 3 join ==
+cc -> c: joinRoom A
+c -> c: create id 3
+c-> main: joinRoom A
+main -> main: save 3 in A
+main -> a: init createOffer for id 3
+main -> b: init createOffer for id 3
+
+a -> aa: init createOffer for id 3
+b -> bb: init createOffer for id 3
+
+aa -> aa: init PeerConnection for id 3
+aa -> aa: createOffer for id 3
+aa -> aa: save localDescription for later id 3
+
+bb -> bb: init PeerConnection for id 3
+bb -> bb: createOffer for id 3
+bb -> bb: save localDescription for later id 3
+
+aa -> a: gives offer for id 3
+a -> main: gives offer for id 3
+main -> c: init createAnswer for id 1
+c -> cc: init createAnswer for id 1
+
+bb -> b: gives offer for id 3
+b -> main: gives offer for id 3
+main -> c: init createAnswer for id 2
+c -> cc: init createAnswer for id 2
+
+group offer from Browser 1
+  cc -> cc: init PeerConnection for id 1
+  cc -> cc: setRemoteDescription from offer id 1
+  cc -> cc: createAnswer from offer id 1
+  cc -> cc: save localDescription for later id 1
+
+  cc -> c: gives answer for id 1
+  c -> main: gives answer for id 1
+  main -> a: init acceptAnswer for id 3
+  a -> aa: init acceptAnswer for id 3
+
+  aa -> aa: setLocalDescription from delay id 3
+  aa -> aa: setRemoteDescription from answer id 3
+
+  group concurrent ICE flow
+    aa -> aa: onicecandidate
+    aa -> a: gives iceCandidate for id 3
+    a -> main: gives iceCandidate for id 3
+    main -> c: init addIceCandidate for id 1
+    c -> cc: init addIceCandidate for id 1
+    cc -> cc: addIceCandidate for id 1
+  end
+
+  aa -> a: ackAcceptAnswer for id 3
+  a -> main: ackAcceptAnswer for id 3
+  main -> c: init ackAcceptAnswer for id 1
+  c -> cc: init ackAcceptAnswer for id 1
+  cc -> cc: setLocalDescription from delay id 1
+
+  group concurrent ICE flow
+    cc -> cc: onicecandidate
+    cc -> c: gives iceCandidate for id 1
+    c -> main: gives iceCandidate for id 1
+    main -> a: init addIceCandidate for id 3
+    a -> aa: init addIceCandidate for id 3
+    aa -> aa: addIceCandidate for id 3
+  end
+end
+
+group offer from Browser 2 [similar with offer from Browser 1]
+  cc -> cc: init PeerConnection for id 2
+  cc -> cc: setRemoteDescription from offer id 2
+  cc -> cc: createAnswer from offer id 2
+  cc -> cc: save localDescription for later id 2
+
+  cc -> c: gives answer for id 2
+  c -> main: gives answer for id 2
+  main -> b: init acceptAnswer for id 3
+  b -> bb: init acceptAnswer for id 3
+
+  rnote across:  omitted, similar with offer from Browser 1
+end
+@enduml

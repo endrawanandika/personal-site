@@ -1,0 +1,22 @@
+@startuml webrtc-flow
+participant "Client 1" as a
+participant "Client 2" as b
+a -> a: init PeerConnection
+a -> a: createOffer
+a -> a: setLocalDescription
+a -> b: gives offer
+b -> b: init PeerConnection
+b -> b: setRemoteDescription from offer
+b -> b: createAnswer
+b -> b: setLocalDescription
+b -> a: gives answer
+a -> a: setRemoteDescription from answer
+== PeerConnection callback Client 2 ==
+b -> b: onicecandidate
+b -> a: gives iceCandidate
+a -> a: addIceCandidate
+== PeerConnection callback Client 1 ==
+a -> a: onicecandidate
+a -> b: gives iceCandidate
+b -> b: addIceCandidate
+@enduml
